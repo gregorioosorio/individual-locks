@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TokenService {
 
 	public static final long EXPIRITY_MILLIS = 1000l;
+	public static final long SLEEP_MILLIS = 500l;
 
 	private ConcurrentMap<String, Token> tokens = new ConcurrentHashMap<>();
 
@@ -27,12 +28,14 @@ public class TokenService {
 
 		try {
 			t.getLock().lock();
+			log.info("lock");
 
 			if (expired(t.getLastUpdateTimestamp())) {
 				renew(key, t);
 			}
 
 		} finally {
+			log.info("unlock");
 			t.getLock().unlock();
 		}
 
@@ -48,7 +51,7 @@ public class TokenService {
 
 	synchronized private Token createToken(String key) {
 		
-		log.info("creating first token: {}", key);
+		log.info("starting creating first token: {}", key);
 
 		Token t = tokens.get(key);
 
@@ -61,6 +64,7 @@ public class TokenService {
 			tokens.put(key, t);
 		}
 
+		log.info("finishing creating first token: {}", key);
 		return t;
 
 	}
@@ -70,7 +74,7 @@ public class TokenService {
 		log.info("starting renewing token: {}", key);
 		
 		try {
-			Thread.sleep(500);
+			Thread.sleep(SLEEP_MILLIS);
 
 			t.setToken(t.getToken() + "-UPDATED");
 			t.setLastUpdateTimestamp(System.currentTimeMillis());
